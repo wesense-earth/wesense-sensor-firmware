@@ -1,0 +1,25 @@
+# Nanopb options for wesense_homebrew_v2.proto
+# This file configures how nanopb generates C code
+
+# Set maximum number of sensor measurements in one message
+# 14 sensors covers all common environmental sensors + particle counts
+wesense.homebrew.v2.SensorReadingV2.measurements  max_count:14
+
+# String field max lengths for SensorReadingV2
+wesense.homebrew.v2.SensorReadingV2.node_name  max_size:25
+wesense.homebrew.v2.SensorReadingV2.node_info  max_size:65
+wesense.homebrew.v2.SensorReadingV2.node_info_url  max_size:97
+
+# String field max lengths for DeviceMetadataV2
+wesense.homebrew.v2.DeviceMetadataV2.node_name  max_size:25
+wesense.homebrew.v2.DeviceMetadataV2.firmware_version  max_size:17
+wesense.homebrew.v2.DeviceMetadataV2.node_info  max_size:65
+wesense.homebrew.v2.DeviceMetadataV2.node_info_url  max_size:97
+
+# Set maximum number of calibration entries in DeviceMetadataV2
+# 10 covers all sensor types with room to spare
+wesense.homebrew.v2.DeviceMetadataV2.calibrations  max_count:10
+
+# Use fixed-size arrays instead of callbacks for repeated fields
+# This makes encoding simpler and more predictable
+*  fixed_length:false
