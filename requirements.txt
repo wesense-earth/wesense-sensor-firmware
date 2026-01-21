@@ -1,0 +1,4 @@
+# Python dependencies for WeSense protobuf decoder and translator service
+protobuf>=6.33.0
+paho-mqtt>=2.1.0
+nanopb>=0.4.0
