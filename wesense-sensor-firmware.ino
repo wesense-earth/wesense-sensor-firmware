@@ -23,12 +23,12 @@ const char* DEVICE_LOCATION = NODE_LOCATION;      // Unique per device - the onl
 
 // INDOOR, OUTDOOR, or MIXED like a covered deck
 typedef enum { INDOOR, OUTDOOR, MIXED } DeploymentType;
-const DeploymentType DEPLOYMENT_TYPE = INDOOR;     
+const DeploymentType DEPLOYMENT_TYPE = OUTDOOR;     
 
 // === NODE INFO - Physical setup description for data analysis ===
 // Describe the physical installation to help with data interpretation
 // Examples: "Outdoor pole, perspex case, south-facing", "Indoor, near window, HVAC vent 2m away"
-const char* NODE_INFO = "Usually ventilated during the dayr"; // Physical setup description, max 64 chars
+const char* NODE_INFO = "Covered Balcony"; // Physical setup description, max 64 chars
 const char* NODE_INFO_URL = "";                   // URL to detailed setup documentation, show off your setup! (optional, max 96 chars)
 
 // === CONNECTIVITY - Transport Control ===
@@ -10303,7 +10303,7 @@ uint32_t readAllSensors() {
     Serial.println("AHT20: Not available");
   }
 
-  // BME680 (priority 5 for T/H, priority 1 for pressure)
+  // BME680 (priority 5 for T/H, priority 4 for pressure)
   // NOTE: In deep sleep mode, gas resistance is skipped (requires continuous heating)
   // but T/H/P readings are still valid and enabled
   if (bme680Available) {
@@ -10323,7 +10323,7 @@ uint32_t readAllSensors() {
       } else {
         Serial.println("  (Humidity disabled by config)");
       }
-      updateSensorReading("pressure", bme_pressure_hPa, "BME680", 1, "pressure");
+      updateSensorReading("pressure", bme_pressure_hPa, "BME680", 4, "pressure");
 
       // Gas resistance only valid with continuous operation (skip in deep sleep mode)
       if (!ENABLE_DEEP_SLEEP) {
