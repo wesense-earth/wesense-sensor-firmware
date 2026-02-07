@@ -15,53 +15,53 @@
  v2.3: Expanded to include Meshtastic hardware types and more ESP32 variants */
 typedef enum _wesense_homebrew_v2_BoardType {
     wesense_homebrew_v2_BoardType_BOARD_UNKNOWN = 0,
-    /* LilyGo boards (1-19) */
-    wesense_homebrew_v2_BoardType_LILYGO_T3_S3 = 1,
-    wesense_homebrew_v2_BoardType_LILYGO_T_BEAM = 2,
-    wesense_homebrew_v2_BoardType_LILYGO_T_BEAM_S3 = 3,
-    wesense_homebrew_v2_BoardType_LILYGO_T3_LORA32 = 4,
-    wesense_homebrew_v2_BoardType_LILYGO_T3_S3_V1_3 = 5,
-    wesense_homebrew_v2_BoardType_LILYGO_T3_S3_LR1121 = 6,
-    wesense_homebrew_v2_BoardType_LILYGO_T_BEAM_V0_7 = 7,
-    wesense_homebrew_v2_BoardType_LILYGO_T_BEAM_S3_CORE = 8,
-    wesense_homebrew_v2_BoardType_LILYGO_T_ECHO = 9,
-    wesense_homebrew_v2_BoardType_LILYGO_T_DECK = 10,
-    wesense_homebrew_v2_BoardType_LILYGO_TLORA_V1 = 11,
-    wesense_homebrew_v2_BoardType_LILYGO_TLORA_V2_1_1P6 = 12,
-    /* Heltec boards (20-29) */
-    wesense_homebrew_v2_BoardType_HELTEC_WIFI_LORA_32_V2 = 20,
-    wesense_homebrew_v2_BoardType_HELTEC_WIFI_LORA_32_V3 = 21,
-    wesense_homebrew_v2_BoardType_HELTEC_WIRELESS_STICK_LITE_V3 = 22,
-    wesense_homebrew_v2_BoardType_HELTEC_WIRELESS_TRACKER = 23,
-    wesense_homebrew_v2_BoardType_HELTEC_WIRELESS_PAPER = 24,
-    wesense_homebrew_v2_BoardType_HELTEC_HT62 = 25,
-    /* RAK Wireless boards (30-39) */
-    wesense_homebrew_v2_BoardType_RAK4631 = 30,
-    wesense_homebrew_v2_BoardType_RAK11200 = 31,
-    wesense_homebrew_v2_BoardType_RAK11310 = 32,
-    /* Generic ESP32 variants (40-59) */
-    wesense_homebrew_v2_BoardType_ESP32_DEVKIT = 40,
+    /* === LilyGo boards (1-19) === */
+    wesense_homebrew_v2_BoardType_LILYGO_T3_S3 = 1, /* T3 S3 (generic) */
+    wesense_homebrew_v2_BoardType_LILYGO_T_BEAM = 2, /* T-Beam (generic) */
+    wesense_homebrew_v2_BoardType_LILYGO_T_BEAM_S3 = 3, /* T-Beam S3 */
+    wesense_homebrew_v2_BoardType_LILYGO_T3_LORA32 = 4, /* T3 LoRa32 (non-S3) */
+    wesense_homebrew_v2_BoardType_LILYGO_T3_S3_V1_3 = 5, /* T3 S3 v1.3 specifically */
+    wesense_homebrew_v2_BoardType_LILYGO_T3_S3_LR1121 = 6, /* T3 S3 with LR1121 radio */
+    wesense_homebrew_v2_BoardType_LILYGO_T_BEAM_V0_7 = 7, /* T-Beam v0.7 (older) */
+    wesense_homebrew_v2_BoardType_LILYGO_T_BEAM_S3_CORE = 8, /* T-Beam S3 Core */
+    wesense_homebrew_v2_BoardType_LILYGO_T_ECHO = 9, /* T-Echo (e-ink) */
+    wesense_homebrew_v2_BoardType_LILYGO_T_DECK = 10, /* T-Deck (keyboard) */
+    wesense_homebrew_v2_BoardType_LILYGO_TLORA_V1 = 11, /* T-LoRa V1 */
+    wesense_homebrew_v2_BoardType_LILYGO_TLORA_V2_1_1P6 = 12, /* T-LoRa V2.1 1.6 */
+    /* === Heltec boards (20-29) === */
+    wesense_homebrew_v2_BoardType_HELTEC_WIFI_LORA_32_V2 = 20, /* WiFi LoRa 32 V2.0 */
+    wesense_homebrew_v2_BoardType_HELTEC_WIFI_LORA_32_V3 = 21, /* WiFi LoRa 32 V3 */
+    wesense_homebrew_v2_BoardType_HELTEC_WIRELESS_STICK_LITE_V3 = 22, /* Wireless Stick Lite V3 */
+    wesense_homebrew_v2_BoardType_HELTEC_WIRELESS_TRACKER = 23, /* Wireless Tracker (GPS) */
+    wesense_homebrew_v2_BoardType_HELTEC_WIRELESS_PAPER = 24, /* Wireless Paper (e-ink) */
+    wesense_homebrew_v2_BoardType_HELTEC_HT62 = 25, /* HT62 */
+    /* === RAK Wireless boards (30-39) === */
+    wesense_homebrew_v2_BoardType_RAK4631 = 30, /* nRF52840 + SX1262 */
+    wesense_homebrew_v2_BoardType_RAK11200 = 31, /* ESP32 + SX1262 */
+    wesense_homebrew_v2_BoardType_RAK11310 = 32, /* RP2040 + SX1262 */
+    /* === Generic ESP32 variants (40-59) === */
+    wesense_homebrew_v2_BoardType_ESP32_DEVKIT = 40, /* ESP32 WROOM-32 / Generic */
     wesense_homebrew_v2_BoardType_ESP32_S2_DEVKIT = 41,
     wesense_homebrew_v2_BoardType_ESP32_S3_DEVKIT = 42,
     wesense_homebrew_v2_BoardType_ESP32_C3_DEVKIT = 43,
     wesense_homebrew_v2_BoardType_ESP32_C6_DEVKIT = 44,
     wesense_homebrew_v2_BoardType_ESP32_C2_DEVKIT = 45,
-    wesense_homebrew_v2_BoardType_ESP32_H2_DEVKIT = 46,
-    wesense_homebrew_v2_BoardType_ESP8266_D1_MINI = 47,
-    /* DFRobot boards (60-69) */
+    wesense_homebrew_v2_BoardType_ESP32_H2_DEVKIT = 46, /* Zigbee/Thread */
+    wesense_homebrew_v2_BoardType_ESP8266_D1_MINI = 47, /* D1 Mini / NodeMCU */
+    /* === DFRobot boards (60-69) === */
     wesense_homebrew_v2_BoardType_DFROBOT_ESP32_C6_BEETLE = 60,
-    /* Other manufacturers (70-79) */
-    wesense_homebrew_v2_BoardType_STATION_G2 = 70,
-    wesense_homebrew_v2_BoardType_CDEBYTE_EORA_S3 = 71,
-    wesense_homebrew_v2_BoardType_RP2040_LORA = 72,
-    wesense_homebrew_v2_BoardType_RPI_PICO = 73,
-    /* DIY / Custom (80-89) */
+    /* === Other manufacturers (70-79) === */
+    wesense_homebrew_v2_BoardType_STATION_G2 = 70, /* Station G2 */
+    wesense_homebrew_v2_BoardType_CDEBYTE_EORA_S3 = 71, /* CDEBYTE EORA S3 */
+    wesense_homebrew_v2_BoardType_RP2040_LORA = 72, /* Generic RP2040 + LoRa */
+    wesense_homebrew_v2_BoardType_RPI_PICO = 73, /* Raspberry Pi Pico */
+    /* === DIY / Custom (80-89) === */
     wesense_homebrew_v2_BoardType_CUSTOM_HOMEBREW = 80,
-    wesense_homebrew_v2_BoardType_DIY_V1 = 81,
-    wesense_homebrew_v2_BoardType_NRF52_PROMICRO_DIY = 82,
-    wesense_homebrew_v2_BoardType_PORTDUINO = 83,
-    wesense_homebrew_v2_BoardType_PRIVATE_HW = 84,
-    /* Pre-calibrated commercial (100+) */
+    wesense_homebrew_v2_BoardType_DIY_V1 = 81, /* Generic DIY build */
+    wesense_homebrew_v2_BoardType_NRF52_PROMICRO_DIY = 82, /* nRF52 ProMicro DIY */
+    wesense_homebrew_v2_BoardType_PORTDUINO = 83, /* Linux/software based */
+    wesense_homebrew_v2_BoardType_PRIVATE_HW = 84, /* Private/undisclosed hardware */
+    /* === Pre-calibrated commercial (100+) === */
     wesense_homebrew_v2_BoardType_WESENSE_SENTINEL = 100,
     wesense_homebrew_v2_BoardType_WESENSE_SCOUT = 101
 } wesense_homebrew_v2_BoardType;
@@ -127,7 +127,8 @@ typedef enum _wesense_homebrew_v2_SensorModel {
     wesense_homebrew_v2_SensorModel_SCD30 = 11, /* Sensirion CO2 (older model) */
     wesense_homebrew_v2_SensorModel_CM1106C = 12, /* Cubic CM1106-C NDIR CO2 (I2C or UART) */
     wesense_homebrew_v2_SensorModel_TMP117 = 13, /* TI high-precision temperature (±0.1°C) */
-    wesense_homebrew_v2_SensorModel_AXP2101 = 14 /* X-Powers PMU (battery management) */
+    wesense_homebrew_v2_SensorModel_AXP2101 = 14, /* X-Powers PMU (battery management) */
+    wesense_homebrew_v2_SensorModel_MS5611 = 15 /* TE Connectivity high-precision barometric pressure */
 } wesense_homebrew_v2_SensorModel;
 
 /* DeploymentType - Indoor/Outdoor classification */
@@ -286,8 +287,8 @@ extern "C" {
 #define _wesense_homebrew_v2_ReadingType_ARRAYSIZE ((wesense_homebrew_v2_ReadingType)(wesense_homebrew_v2_ReadingType_PC_100UM+1))
 
 #define _wesense_homebrew_v2_SensorModel_MIN wesense_homebrew_v2_SensorModel_SENSOR_UNKNOWN
-#define _wesense_homebrew_v2_SensorModel_MAX wesense_homebrew_v2_SensorModel_AXP2101
-#define _wesense_homebrew_v2_SensorModel_ARRAYSIZE ((wesense_homebrew_v2_SensorModel)(wesense_homebrew_v2_SensorModel_AXP2101+1))
+#define _wesense_homebrew_v2_SensorModel_MAX wesense_homebrew_v2_SensorModel_MS5611
+#define _wesense_homebrew_v2_SensorModel_ARRAYSIZE ((wesense_homebrew_v2_SensorModel)(wesense_homebrew_v2_SensorModel_MS5611+1))
 
 #define _wesense_homebrew_v2_DeploymentType_MIN wesense_homebrew_v2_DeploymentType_DEPLOYMENT_UNKNOWN
 #define _wesense_homebrew_v2_DeploymentType_MAX wesense_homebrew_v2_DeploymentType_MIXED
