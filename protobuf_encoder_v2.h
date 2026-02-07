@@ -100,6 +100,8 @@ wesense_homebrew_v2_SensorModel mapSensorModelV2(const char* sensorName) {
         return wesense_homebrew_v2_SensorModel_TMP117;
     } else if (name.indexOf("axp") >= 0) {
         return wesense_homebrew_v2_SensorModel_AXP2101;
+    } else if (name.indexOf("ms5611") >= 0) {
+        return wesense_homebrew_v2_SensorModel_MS5611;
     }
     return wesense_homebrew_v2_SensorModel_SENSOR_UNKNOWN;
 }
