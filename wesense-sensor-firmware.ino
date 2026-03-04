@@ -23,18 +23,18 @@ const char* DEVICE_LOCATION = NODE_LOCATION;      // Unique per device - the onl
 
 // INDOOR, OUTDOOR, or MIXED like a covered deck
 typedef enum { INDOOR, OUTDOOR, MIXED } DeploymentType;
-const DeploymentType DEPLOYMENT_TYPE = OUTDOOR;     
+const DeploymentType DEPLOYMENT_TYPE = INDOOR;     
 
 // === NODE INFO - Physical setup description for data analysis ===
 // Describe the physical installation to help with data interpretation
 // Examples: "Outdoor pole, perspex case, south-facing", "Indoor, near window, HVAC vent 2m away"
-const char* NODE_INFO = "Covered Balcony"; // Physical setup description, max 64 chars
+const char* NODE_INFO = "Office with no windows"; // Physical setup description, max 64 chars
 const char* NODE_INFO_URL = "";                   // URL to detailed setup documentation, show off your setup! (optional, max 96 chars)
 
 // === CONNECTIVITY - Transport Control ===
 const bool ENABLE_WIFI = true;                    // WiFi for MQTT/NTP
-const bool ENABLE_MQTT = true;                    // Publish sensor data to MQTT
-const bool DISABLE_LORAWAN = true;               // Set true to disable LoRaWAN
+const bool ENABLE_MQTT = false;                    // Publish sensor data to MQTT
+const bool DISABLE_LORAWAN = false;               // Set true to disable LoRaWAN
 const bool WIFI_STOP_AFTER_TIME_SYNC = false;     // Stop WiFi after NTP sync (LoRaWAN-only mode)
 
 // === CONNECTIVITY - WiFi & MQTT ===
