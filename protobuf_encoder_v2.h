@@ -109,12 +109,12 @@ wesense_homebrew_v2_SensorModel mapSensorModelV2(const char* sensorName) {
 /**
  * Map deployment type enum to v2 enum
  */
-wesense_homebrew_v2_DeploymentType mapDeploymentTypeV2(DeploymentType type) {
+wesense_homebrew_v2_DeploymentType mapDeploymentTypeV2(int type) {
     switch (type) {
-        case INDOOR:  return wesense_homebrew_v2_DeploymentType_INDOOR;
-        case OUTDOOR: return wesense_homebrew_v2_DeploymentType_OUTDOOR;
-        case MIXED:   return wesense_homebrew_v2_DeploymentType_MIXED;
-        default:      return wesense_homebrew_v2_DeploymentType_DEPLOYMENT_UNKNOWN;
+        case 1:  return wesense_homebrew_v2_DeploymentType_INDOOR;
+        case 2:  return wesense_homebrew_v2_DeploymentType_OUTDOOR;
+        case 3:  return wesense_homebrew_v2_DeploymentType_MIXED;
+        default: return wesense_homebrew_v2_DeploymentType_DEPLOYMENT_UNKNOWN;
     }
 }
 

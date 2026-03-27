@@ -21,20 +21,19 @@ const char* SUBDIVISION_CODE = "auk";             // ISO 3166-2: auk, wgn, nsw, 
 const char* NODE_NAME_PREFIX = NODE_PREFIX;       // Shared across all your devices (leave empty for custom names)
 const char* DEVICE_LOCATION = NODE_LOCATION;      // Unique per device - the only field you need to change!
 
-// INDOOR, OUTDOOR, or MIXED like a covered deck
-typedef enum { INDOOR, OUTDOOR, MIXED } DeploymentType;
-const DeploymentType DEPLOYMENT_TYPE = INDOOR;     
+// Deployment type: 1 = INDOOR, 2 = OUTDOOR, 3 = MIXED (e.g., covered deck)
+// Value loaded from credentials.h
+const int DEPLOYMENT_TYPE = DEPLOYMENT;
 
 // === NODE INFO - Physical setup description for data analysis ===
-// Describe the physical installation to help with data interpretation
-// Examples: "Outdoor pole, perspex case, south-facing", "Indoor, near window, HVAC vent 2m away"
-const char* NODE_INFO = "Office with no windows"; // Physical setup description, max 64 chars
-const char* NODE_INFO_URL = "";                   // URL to detailed setup documentation, show off your setup! (optional, max 96 chars)
+// Values loaded from credentials.h
+const char* NODE_INFO = NODE_INFO_TEXT;             // Physical setup description, max 64 chars
+const char* NODE_INFO_URL = NODE_INFO_URL_TEXT;     // URL to detailed setup documentation (optional, max 96 chars)
 
 // === CONNECTIVITY - Transport Control ===
 const bool ENABLE_WIFI = true;                    // WiFi for MQTT/NTP
-const bool ENABLE_MQTT = false;                    // Publish sensor data to MQTT
-const bool DISABLE_LORAWAN = false;               // Set true to disable LoRaWAN
+const bool ENABLE_MQTT = true;                    // Publish sensor data to MQTT
+const bool DISABLE_LORAWAN = true;               // Set true to disable LoRaWAN
 const bool WIFI_STOP_AFTER_TIME_SYNC = false;     // Stop WiFi after NTP sync (LoRaWAN-only mode)
 
 // === CONNECTIVITY - WiFi & MQTT ===
@@ -100,7 +99,7 @@ const unsigned long LORAWAN_TX_INTERVAL_MS = 300000;      // 5 min - LoRaWAN tra
 // Deep sleep is for battery-powered LoRaWAN Class A deployments.
 // Device sleeps between transmissions, waking only to read sensors and TX.
 // IMPORTANT: SGP41 VOC/NOx and BME680 gas readings are auto-disabled (incompatible).
-const bool ENABLE_DEEP_SLEEP = true;                      // Enable deep sleep (requires LoRaWAN, no active WiFi)
+const bool ENABLE_DEEP_SLEEP = false;                     // Enable deep sleep (requires LoRaWAN, no active WiFi)
 const unsigned long SENSOR_WARMUP_MS = 10000;             // 10s base warmup (for SCD4x CO2)
 const unsigned long PM_SENSOR_WARMUP_MS = 30000;          // 30s extended warmup if PM sensor detected
 const unsigned long POST_TX_DELAY_MS = 100;               // Brief delay after TX before sleep
@@ -4913,9 +4912,9 @@ bool readPMS5003Data(PMS5003Data &data) {
 // Get deployment type string - abbreviated for bandwidth efficiency
 const char* getDeploymentTypeString() {
   switch (DEPLOYMENT_TYPE) {
-    case INDOOR: return "in";
-    case OUTDOOR: return "out"; 
-    case MIXED: return "mix";
+    case 1: return "in";
+    case 2: return "out";
+    case 3: return "mix";
     default: return "out"; // Safe default
   }
 }
@@ -5164,7 +5163,9 @@ void handleWiFiReconnection() {
 // Non-blocking MQTT reconnection with rate limiting
 static unsigned long lastMqttReconnectAttempt = 0;
 static int mqttConsecutiveFailures = 0;  // Track consecutive failures for socket reset
+static int mqttDnsFailures = 0;         // Track DNS failures separately
 const unsigned long MQTT_RECONNECT_INTERVAL_MS = 10000; // Try every 10 seconds (enough time for TCP to reset)
+const unsigned long MQTT_DNS_FAIL_INTERVAL_MS = 30000;  // Back off to 30s when DNS is failing
 const int MQTT_FAILURES_BEFORE_SOCKET_RESET = 5;  // Reset socket after this many consecutive failures
 
 void reconnect() {
@@ -5178,13 +5179,15 @@ void reconnect() {
 
   if (client.connected()) {
     mqttConsecutiveFailures = 0;  // Reset counter on successful connection
+    mqttDnsFailures = 0;
     return; // Already connected
   }
 
   // Rate limit reconnection attempts (non-blocking)
-  // But allow first attempt immediately after WiFi connects
+  // Back off more when DNS is the problem - no point hammering a dead resolver
   unsigned long now = millis();
-  if (lastMqttReconnectAttempt > 0 && (now - lastMqttReconnectAttempt < MQTT_RECONNECT_INTERVAL_MS)) {
+  unsigned long interval = (mqttDnsFailures > 0) ? MQTT_DNS_FAIL_INTERVAL_MS : MQTT_RECONNECT_INTERVAL_MS;
+  if (lastMqttReconnectAttempt > 0 && (now - lastMqttReconnectAttempt < interval)) {
     return;
   }
   lastMqttReconnectAttempt = now;
@@ -5198,20 +5201,48 @@ void reconnect() {
     delay(100);        // Allow lwIP to clean up
     mqttConsecutiveFailures = 0;  // Reset counter
   }
-  
+
+  // Pre-resolve DNS before attempting MQTT connect
+  // If DNS is down, skip the connect attempt entirely to avoid socket/timeout waste
+  IPAddress mqttIP;
+  bool dnsOk = WiFi.hostByName(mqtt_server, mqttIP);
+
+  if (!dnsOk) {
+    mqttDnsFailures++;
+    if (mqttDnsFailures <= 3 || (mqttDnsFailures % 10) == 0) {
+      Serial.print("MQTT: DNS resolution failed for ");
+      Serial.print(mqtt_server);
+      Serial.print(" (attempt ");
+      Serial.print(mqttDnsFailures);
+      Serial.println(") - will retry in 30s");
+    }
+    if (mqttDnsFailures == 1) {
+      syslog.warning("MQTT DNS resolution failed for " + String(mqtt_server));
+    }
+    return;  // Don't attempt connect - DNS is the problem
+  }
+
+  // DNS recovered after failures
+  if (mqttDnsFailures > 0) {
+    Serial.print("MQTT: DNS recovered after ");
+    Serial.print(mqttDnsFailures);
+    Serial.print(" failures, resolved ");
+    Serial.print(mqtt_server);
+    Serial.print(" to ");
+    Serial.println(mqttIP);
+    syslog.notice("MQTT DNS recovered for " + String(mqtt_server) + " -> " + mqttIP.toString());
+    mqttDnsFailures = 0;
+  }
+
   if (ENABLE_DEBUG_OUTPUT) {
     Serial.print("Attempting MQTT connection to "); Serial.print(mqtt_server); Serial.print(":"); Serial.print(mqtt_port);
     Serial.print(" as '"); Serial.print(mqttClientID); Serial.println("'...");
-
-    // Debug: Check DNS resolution (ESP32-C3 troubleshooting)
-    IPAddress mqttIP;
-    if (WiFi.hostByName(mqtt_server, mqttIP)) {
-      Serial.print("  DNS resolved to: ");
-      Serial.println(mqttIP);
-    } else {
-      Serial.println("  DNS resolution FAILED!");
-    }
+    Serial.print("  DNS resolved to: ");
+    Serial.println(mqttIP);
   }
+
+  // Connect using resolved IP to avoid double DNS lookup
+  client.setServer(mqttIP, mqtt_port);
 
   // ESP32-C3 fix: yield to allow any pending lwIP operations to complete
   // Prevents TCPIP core lock assertion failure on single-core chips
@@ -5252,6 +5283,10 @@ void reconnect() {
 
     syslog.warning("MQTT failed rc=" + String(client.state()) + " (" + errorReason + ")");
     mqttConsecutiveFailures++;  // Track failures for socket reset logic
+
+    // Restore hostname-based server so next attempt re-resolves DNS
+    // (in case the IP changed, e.g. DHCP renewal on the broker)
+    client.setServer(mqtt_server, mqtt_port);
   }
 }
 
