@@ -345,6 +345,8 @@ const bool REQUIRE_EXPLICIT_RESET_COMMAND = true;    // Require MQTT command to 
 #include <WiFiServer.h>   // For secure telnet monitor
 #include <WiFiUdp.h>      // For syslog client
 #include <PubSubClient.h>
+#include <WiFiClientSecure.h>
+#include "ca_cert.h"
 #include <time.h>
 #include <set>
 #include <Preferences.h>  // For calibration state persistence
@@ -2365,7 +2367,19 @@ char mqttClientID[64];       // Increased size accordingly
 char deviceTopicPrefix[96];  // Increased size for longer topic structure
 
 // --- MQTT Client & WiFi Client ---
-WiFiClient espClient;
+// TLS support: when MQTT_USE_TLS is true (set in credentials.h), the firmware
+// uses WiFiClientSecure with the ISRG Root X1 CA cert to verify the MQTT server.
+// This enables MQTTS (port 8883) with Let's Encrypt certificates.
+// When false, uses plain WiFiClient on port 1883.
+#ifdef MQTT_USE_TLS
+  #if MQTT_USE_TLS
+    WiFiClientSecure espClient;
+  #else
+    WiFiClient espClient;
+  #endif
+#else
+  WiFiClient espClient;
+#endif
 PubSubClient client(espClient);
 
 // --- GPS Serial ---
@@ -9477,10 +9491,20 @@ void setup() {
       updateBootStatus("Setting up MQTT...");
       // ESP32-C3 fix: Set longer socket timeout for single-core stability
       espClient.setTimeout(10);  // 10 seconds (default is often too short for C3)
+
+      // Configure TLS if enabled
+      #ifdef MQTT_USE_TLS
+        #if MQTT_USE_TLS
+          espClient.setCACert(ISRG_ROOT_X1_CA);
+          Serial.println("MQTT: TLS enabled (ISRG Root X1 CA, valid until 2035)");
+        #endif
+      #endif
+
       client.setServer(mqtt_server, mqtt_port);
       client.setKeepAlive(60);   // 60 seconds keepalive (default 15s too aggressive for sensor reading delays)
       client.setCallback(mqttCallback); // Register MQTT callback for incoming commands
-      Serial.println("MQTT: Enabled and configured");
+      Serial.print("MQTT: Enabled, server="); Serial.print(mqtt_server);
+      Serial.print(":"); Serial.println(mqtt_port);
     } else {
       Serial.println("MQTT: Disabled by configuration (ENABLE_MQTT = false)");
     }
