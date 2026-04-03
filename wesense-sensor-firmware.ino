@@ -345,8 +345,12 @@ const bool REQUIRE_EXPLICIT_RESET_COMMAND = true;    // Require MQTT command to 
 #include <WiFiServer.h>   // For secure telnet monitor
 #include <WiFiUdp.h>      // For syslog client
 #include <PubSubClient.h>
-#include <WiFiClientSecure.h>
-#include "ca_cert.h"
+#ifdef MQTT_USE_TLS
+  #if MQTT_USE_TLS
+    #include <WiFiClientSecure.h>
+    #include "ca_cert.h"
+  #endif
+#endif
 #include <time.h>
 #include <set>
 #include <Preferences.h>  // For calibration state persistence
@@ -5255,8 +5259,19 @@ void reconnect() {
     Serial.println(mqttIP);
   }
 
-  // Connect using resolved IP to avoid double DNS lookup
-  client.setServer(mqttIP, mqtt_port);
+  // For TLS: connect using hostname (not resolved IP) so the TLS handshake
+  // sends the correct SNI and verifies the cert against the domain name.
+  // For plain MQTT: use resolved IP to avoid double DNS lookup.
+  #ifdef MQTT_USE_TLS
+    #if MQTT_USE_TLS
+      client.setServer(mqtt_server, mqtt_port);
+      espClient.setHandshakeTimeout(10);  // 10 seconds for TLS handshake
+    #else
+      client.setServer(mqttIP, mqtt_port);
+    #endif
+  #else
+    client.setServer(mqttIP, mqtt_port);
+  #endif
 
   // ESP32-C3 fix: yield to allow any pending lwIP operations to complete
   // Prevents TCPIP core lock assertion failure on single-core chips

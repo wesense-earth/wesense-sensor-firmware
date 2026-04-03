@@ -20,6 +20,7 @@ CONTEXT.md
 
 # Credentials
 credentials.h
+credentials.h.old
 
 # Python
 venv/
