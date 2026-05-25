@@ -8,7 +8,7 @@ A comprehensive environmental monitoring solution for ESP32-based devices with a
 
 ### 🔧 **Automatic Hardware Detection**
 
-- **Multi-Board Support**: ESP32 Generic/WROOM-32, T-Beam v0.7/v1.0/v1.1, DFRobot Beetle ESP32-C6 Mini
+- **Multi-Board Support**: ESP32 Generic/WROOM-32, ESP32-C3 Generic, ESP32-S3 Generic, DFRobot Beetle ESP32-C6 Mini, T-Beam v0.7/v1.0/v1.1, T-Beam T3 S3 v1.2
 - **Dynamic Pin Configuration**: Automatic I2C, SPI, GPS, and LoRa pin mapping per board
 - **Feature Detection**: Automatically enables/disables LoRa, PMU, GPS based on detected hardware
 - **Graceful Degradation**: Continues operation even if specific hardware unavailable
@@ -102,9 +102,12 @@ With 400ms dwell time restrictions, AU915 has the following payload limits:
 | Board                       | LoRa     | GPS | PMU       | Primary I2C          | Secondary I2C            | Status      |
 | --------------------------- | -------- | --- | --------- | -------------------- | ------------------------ | ----------- |
 | **ESP32 WROOM-32/DevKit**   | ❌        | ❌   | ❌         | GPIO 21/22 (D21/D22) | GPIO 13/14 (D13/D14)     | ✅ Tested    |
+| **ESP32-C3 Generic**        | ❌        | ❌   | ❌         | GPIO 4/5             | GPIO 8/9                 | ✅ Supported |
+| **ESP32-S3 Generic DevKit** | ❌        | ❌   | ❌         | GPIO 8/9             | GPIO 17/18               | ✅ Supported |
+| **DFRobot Beetle ESP32-C6** | ❌        | ❌   | ❌         | GPIO 19/20 (SDA/SCL) | GPIO 6/7 (LP_SDA/LP_SCL) | ✅ Supported |
 | **T-Beam v0.7**             | ✅ SX1276 | ✅   | ✅ AXP192  | GPIO 21/22           | GPIO 13/14               | ✅ Supported |
 | **T-Beam v1.0/1.1**         | ✅ SX1276 | ✅   | ✅ AXP2101 | GPIO 21/22           | GPIO 13/14               | ✅ Supported |
-| **DFRobot Beetle ESP32-C6** | ❌        | ❌   | ❌         | GPIO 19/20 (SDA/SCL) | GPIO 6/7 (LP_SDA/LP_SCL) | ✅ Supported |
+| **T-Beam T3 S3 v1.2**       | ✅ SX1262 | ⚠️ Variant | ✅ AXP2101 | GPIO 18/17 (hardwired OLED/PMU) | GPIO 45/46 | ✅ Supported |
 
 ### **Supported Sensors**
 
