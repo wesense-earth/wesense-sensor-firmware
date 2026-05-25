@@ -2,7 +2,7 @@
 
 A comprehensive environmental monitoring solution for ESP32-based devices with automatic board detection, multi-sensor support, and global deployment capabilities.
 
-**📖 [View Complete Documentation Wiki](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki) ➜**
+**📖 [View Complete Documentation](https://docs.wesense.earth/) ➜**
 
 ## 🌟 **Key Features**
 
@@ -16,10 +16,10 @@ A comprehensive environmental monitoring solution for ESP32-based devices with a
 ### 🌡️ **Comprehensive Sensor Support**
 
 - **Temperature & Humidity**: SHT4x (primary), AHT20 (fallback), BME680 (multi-sensor)
-- **CO2 Monitoring**: SCD4x (primary), SCD30 (fallback) with automatic calibration and dynamic pressure compensation
+- **CO2 Monitoring**: SCD4x (primary), SCD30 (fallback), CM1106-C (I2C or UART) with automatic calibration and dynamic pressure compensation
 - **Air Quality**: SGP41 VOC/NOx with temperature/humidity compensation
 - **Particulate Matter**: PMS5003 PM1.0/PM2.5/PM10 with particle count analysis
-- **Atmospheric Pressure**: BME680, BMP390 (high precision), BMP280 with altitude correction
+- **Atmospheric Pressure**: MS5611 (high precision altimeter), BMP390 (high precision), BME680, BMP280 with altitude correction
 - **Gas Resistance**: BME680 for VOC estimation and air quality indication
 - **Power Management**: AXP2101 PMU with battery monitoring (T-Beam)
 - **DC Power Monitoring**: INA219 current/voltage/power monitoring with 0-26V, 3.2A capability
@@ -118,7 +118,9 @@ With 400ms dwell time restrictions, AU915 has the following payload limits:
 | **BME680**  | Temperature, Humidity, Pressure, Gas | I2C       | 0x76/0x77    | 4-in-1 environmental sensor with VOC             |
 | **SCD4x**   | CO2, Temperature, Humidity           | I2C       | 0x62         | NDIR CO2 sensor with auto-calibration (primary)  |
 | **SCD30**   | CO2, Temperature, Humidity           | I2C       | 0x61         | NDIR CO2 sensor with auto-calibration (fallback) |
+| **CM1106-C**| CO2                                  | I2C/UART  | 0x31         | NDIR CO2 sensor with ABC (24h + 15-day cycle)    |
 | **SGP41**   | VOC Index, NOx Index                 | I2C       | 0x59         | Air quality with gas index algorithms            |
+| **MS5611**  | Pressure, Temperature                | I2C       | 0x77         | High-precision barometric altimeter (priority 1) |
 | **BMP390**  | Pressure, Temperature                | I2C       | 0x76/0x77    | High precision barometric pressure (±3 Pa)       |
 | **BMP280**  | Pressure, Temperature                | I2C       | 0x76/0x77    | Barometric pressure with altitude                |
 | **PMS5003** | PM1.0, PM2.5, PM10, Particles        | UART      | GPIO16/17    | Plantower laser particle sensor                  |
@@ -170,6 +172,7 @@ Adafruit BMP3XX Library (for BMP390)
 Adafruit BME680 Library
 Adafruit AHTX0 Library
 Adafruit INA219 Library
+MS5611 (by Rob Tillaart — high-precision barometric pressure)
 PubSubClient (for MQTT)
 TinyGPSPlus
 XPowersLib (for T-Beam PMU support)
@@ -185,15 +188,15 @@ XPowersLib (for T-Beam PMU support)
 
 ```bash
 # Clone or download this repository
-git clone https://github.com/your-repo/ESP32_SensorArray_Automatic.git
-cd ESP32_SensorArray_Automatic
+git clone https://github.com/wesense-earth/wesense-sensor-firmware.git
+cd wesense-sensor-firmware
 
-# Open ESP32_SensorArray_Automatic.ino in Arduino IDE
+# Open wesense-sensor-firmware.ino in Arduino IDE
 ```
 
 ### **4. Basic Configuration**
 
-Edit the configuration section at the top of `ESP32_SensorArray_Automatic.ino`:
+Edit the configuration section at the top of `wesense-sensor-firmware.ino`:
 
 ```cpp
 // WiFi & MQTT Configuration
@@ -246,29 +249,32 @@ See `proto/README.md` for detailed schema documentation.
 
 ## 📚 **Documentation**
 
-### **📖 [Complete Documentation Wiki ➜](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki)**
+### **📖 [Complete Documentation ➜](https://docs.wesense.earth/)**
 
-For detailed configuration, troubleshooting, and advanced features, see our comprehensive wiki:
+For detailed configuration, hardware guides, and architecture, see the documentation site:
 
 **🚀 Getting Started:**
 
-- **[Hardware Setup & Wiring](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Hardware-Setup)** - Sensor connections and I2C configuration
-- **[Configuration Guide](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Configuration)** - Complete settings reference
-- **[Air Quality Ranges](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Air-Quality-Ranges)** - Understanding sensor readings
+- **[Quick Start](https://docs.wesense.earth/getting-started/quick-start)** - Get a node running
+- **[Build a WeSense Node](https://docs.wesense.earth/getting-started/build-wesense-node)** - Hardware assembly and wiring
+- **[Recommended Sensors](https://docs.wesense.earth/getting-started/recommended-sensors)** - Sensor selection guide
+- **[Firmware Setup](https://docs.wesense.earth/getting-started/firmware-setup)** - Flashing and first boot
+- **[Firmware Configuration](https://docs.wesense.earth/getting-started/firmware-configuration)** - Complete settings reference
+- **[Firmware Update](https://docs.wesense.earth/getting-started/firmware-update)** - Updating an existing node
 
-**🎛️ Operation & Control:**
+**🎛️ Operation & Hardware:**
 
-- **[MQTT Commands](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/MQTT-Commands)** - Remote control and management
-- **[Calibration System](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Calibration)** - Advanced calibration management
-- **[Location Management](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Location-Management)** - Dynamic positioning
-- **[Remote Debug](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Remote-Debug)** - Network serial monitor
+- **[Managing Your Sensor](https://docs.wesense.earth/getting-started/managing-your-sensor)** - MQTT commands, calibration, remote control
+- **[Board Configurations](https://docs.wesense.earth/hardware/board-configurations)** - Per-board pin maps
+- **[Sensor Specs](https://docs.wesense.earth/hardware/sensor-specs)** - Supported sensor details
+- **[Enclosure Designs](https://docs.wesense.earth/hardware/enclosure-designs)** - Mounting and weatherproofing
 
-**🔧 Support & Advanced:**
+**🌐 Network & Deployment:**
 
-- **[Troubleshooting Guide](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Troubleshooting)** - Common issues and solutions
-- **[Monitoring & Analytics](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Monitoring)** - InfluxDB, Grafana, data pipelines
-- **[Global Deployment](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Global-Deployment)** - Enterprise-scale networks
-- **[Development Guide](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Development)** - Contributing and extending
+- **[Deployment Profiles](https://docs.wesense.earth/station-operators/deployment-profiles)** - Guardian / Contributor / Hub / Bootstrap
+- **[Operate a Station](https://docs.wesense.earth/station-operators/operate-a-station)** - Running your own node
+- **[Architecture](https://docs.wesense.earth/developers/architecture)** - How the WeSense network fits together
+- **[Contributing Code](https://docs.wesense.earth/developers/contributing-code)** - Contributing and extending
 
 ## 🔧 **Troubleshooting Quick Reference**
 
@@ -288,11 +294,11 @@ For detailed configuration, troubleshooting, and advanced features, see our comp
 - Verify 5V power supply (required, not 3.3V)
 - Check UART wiring: PMS5003 TX → ESP32 RX, PMS5003 RX → ESP32 TX
 
-**For detailed troubleshooting**, see **[Troubleshooting Wiki](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Troubleshooting)**
+**For detailed troubleshooting**, see the **[Documentation site](https://docs.wesense.earth/)**
 
 ## 🤝 **Contributing**
 
-Contributions welcome! Please see our **[Development Guide](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki/Development)** for details on:
+Contributions welcome! Please see the **[Contributing Code guide](https://docs.wesense.earth/developers/contributing-code)** for details on:
 
 - Adding new sensors
 - Adding new boards  
@@ -305,9 +311,9 @@ This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE)
 
 ## 📧 **Support**
 
-- **Issues**: [GitHub Issues](https://github.com/your-repo/ESP32_SensorArray_Automatic/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-repo/ESP32_SensorArray_Automatic/discussions)
-- **Documentation**: [Project Wiki](https://gitea.electropositive.net/SkyTrace/SkyTrace-ESP32_SensorArray_Automatic/wiki)
+- **Issues**: [GitHub Issues](https://github.com/wesense-earth/wesense-sensor-firmware/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/wesense-earth/wesense-sensor-firmware/discussions)
+- **Documentation**: [docs.wesense.earth](https://docs.wesense.earth/)
 
 ---
 
