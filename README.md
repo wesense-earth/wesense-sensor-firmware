@@ -1,115 +1,58 @@
-# WeSense Sensor Firmware - Automatic Multi-Board Environmental Monitor Firmware
+# WeSense Sensor Firmware
 
-A comprehensive environmental monitoring solution for ESP32-based devices with automatic board detection, multi-sensor support, and global deployment capabilities.
+**Turn an inexpensive ESP32 into a calibrated environmental sensor that joins the [WeSense](https://wesense.earth) decentralised air-quality network — or runs entirely standalone in Home Assistant.**
 
-**📖 [View Complete Documentation](https://docs.wesense.earth/) ➜**
+Auto-detects your board. Auto-discovers your sensors. Signs every reading. Publishes over WiFi/MQTT or LoRaWAN with no central server in the path.
 
-## 🌟 **Key Features**
+**📖 Full setup, configuration, and operation guides: [docs.wesense.earth](https://docs.wesense.earth/) ➜**
 
-### 🔧 **Automatic Hardware Detection**
+---
 
-- **Multi-Board Support**: ESP32 Generic/WROOM-32, ESP32-C3 Generic, ESP32-S3 Generic, DFRobot Beetle ESP32-C6 Mini, T-Beam v0.7/v1.0/v1.1, T-Beam T3 S3 v1.2
-- **Dynamic Pin Configuration**: Automatic I2C, SPI, GPS, and LoRa pin mapping per board
-- **Feature Detection**: Automatically enables/disables LoRa, PMU, GPS based on detected hardware
-- **Graceful Degradation**: Continues operation even if specific hardware unavailable
+## What you can do with it
 
-### 🌡️ **Comprehensive Sensor Support**
+- **Contribute to a global air-quality map** — readings flow to [map.wesense.earth](https://map.wesense.earth) and are mirrored across the WeSense P2P network. No paywall, no central API.
+- **Run your own indoor or outdoor air monitor** — Home Assistant picks it up automatically via MQTT discovery, or feed it into your own MQTT broker / dashboards.
+- **Deploy off-grid** — LoRaWAN with TTN integration means no WiFi required. Solar + LoRa T-Beam = a sensor you can leave anywhere.
+- **Build a sensor fleet** — every reading is signed end-to-end with Ed25519, so anyone replicating your data can verify it came from your station.
 
-- **Temperature & Humidity**: SHT4x (primary), AHT20 (fallback), BME680 (multi-sensor)
-- **CO2 Monitoring**: SCD4x (primary), SCD30 (fallback), CM1106-C (I2C or UART) with automatic calibration and dynamic pressure compensation
-- **Air Quality**: SGP41 VOC/NOx with temperature/humidity compensation
-- **Particulate Matter**: PMS5003 PM1.0/PM2.5/PM10 with particle count analysis
-- **Atmospheric Pressure**: MS5611 (high precision altimeter), BMP390 (high precision), BME680, BMP280 with altitude correction
-- **Gas Resistance**: BME680 for VOC estimation and air quality indication
-- **Power Management**: AXP2101 PMU with battery monitoring (T-Beam)
-- **DC Power Monitoring**: INA219 current/voltage/power monitoring with 0-26V, 3.2A capability
-- **Location Services**: GPS with satellite count and fix status
+## Why this firmware
 
-### 🧠 **Intelligent Sensor Hierarchy**
+### Plug-and-play hardware
+Drop in any supported ESP32 board with any combination of supported sensors and it just works. The firmware probes I2C at boot, identifies what's connected, and configures itself. Add a sensor later? Just plug it in and reboot.
 
-- **Duplicate Detection**: Automatically identifies overlapping sensor capabilities
-- **Accuracy-Based Priority**: Always publishes the most accurate reading for each measurement type
-- **Smart Fallback**: Uses less accurate sensors only when higher-accuracy ones are unavailable
-- **Bandwidth Optimization**: Eliminates redundant data (60-80% reduction) while maintaining sensor functionality
+### Best-reading-wins sensor fusion
+When two sensors measure the same thing (say, an SHT4x and an AHT20 both reporting temperature), the firmware always publishes the more accurate one. Cheap sensors act as automatic backups for premium ones without spamming the network with duplicates.
 
-### 📡 **Multi-Protocol Connectivity**
+### Two transports, one configuration
+Same firmware, same `.ino` file: enable WiFi/MQTT for indoor or networked deployments, or LoRaWAN for off-grid. A compact V2 protobuf payload packs all sensors into a single uplink — even on AU915's tightest data rates.
 
-- **WiFi + MQTT**: Real-time sensor data publishing with automatic reconnection
-- **LoRaWAN**: Long-range communication for off-grid deployments (OTAA with TTN)
-- **GPS Integration**: Location-aware sensor readings for mobile/distributed networks
-- **NTP/GPS Time Sync**: Accurate timestamping with automatic daily resync
+### Honest calibration
+Sensors that need to settle (SCD4x CO2 needs 7 days of auto-calibration; SGP41 VOC index needs 12 hours; BME680 baselines over 2 days) are tracked individually. The firmware suppresses unreliable readings during warmup and surfaces calibration state — so you never publish data your sensor isn't confident about. Calibration state survives reboots.
 
-### 📦 **LoRaWAN Payload Optimization (V2 Protobuf)**
+### Remote control over MQTT
+Calibrate a CO2 sensor, toggle auto-calibration, restart, or factory-reset over MQTT — no physical access needed. Useful when your station is on the roof.
 
-The firmware uses a compact V2 protobuf format that packs all sensor readings into a single message, dramatically reducing payload size compared to sending each sensor separately.
+### Home Assistant ready
+MQTT auto-discovery means every sensor shows up as a proper HA entity with the right device class and icon, grouped under a single device. Zero YAML.
 
-#### Payload Size Comparison
+### Built to be trustworthy
+Every reading carries an Ed25519 signature and a public key. The data is yours, and anyone can verify it without trusting WeSense (or anyone else).
 
-| Sensors            | V1 (Legacy) | V2 (Current) | Savings |
-| ------------------ | ----------- | ------------ | ------- |
-| 2 (temp, humidity) | ~198 bytes  | ~53 bytes    | **73%** |
-| 4 sensors          | ~400 bytes  | ~71 bytes    | **82%** |
-| 6 sensors          | ~600 bytes  | ~89 bytes    | **85%** |
-| 10 sensors         | ~1000 bytes | ~125 bytes   | **88%** |
-| 12 sensors (max)   | ~1200 bytes | ~143 bytes   | **88%** |
+## Supported hardware
 
-#### AU915 Data Rate Compatibility (Australia/NZ)
+### ESP32 Boards
 
-With 400ms dwell time restrictions, AU915 has the following payload limits:
+| Board                       | LoRa       | GPS         | PMU       | Primary I2C                     | Secondary I2C            | Status      |
+| --------------------------- | ---------- | ----------- | --------- | ------------------------------- | ------------------------ | ----------- |
+| **ESP32 WROOM-32/DevKit**   | ❌          | ❌           | ❌         | GPIO 21/22 (D21/D22)            | GPIO 13/14 (D13/D14)     | ✅ Tested    |
+| **ESP32-C3 Generic**        | ❌          | ❌           | ❌         | GPIO 4/5                        | GPIO 8/9                 | ✅ Supported |
+| **ESP32-S3 Generic DevKit** | ❌          | ❌           | ❌         | GPIO 8/9                        | GPIO 17/18               | ✅ Supported |
+| **DFRobot Beetle ESP32-C6** | ❌          | ❌           | ❌         | GPIO 19/20 (SDA/SCL)            | GPIO 6/7 (LP_SDA/LP_SCL) | ✅ Supported |
+| **T-Beam v0.7**             | ✅ SX1276   | ✅           | ✅ AXP192  | GPIO 21/22                      | GPIO 13/14               | ✅ Supported |
+| **T-Beam v1.0/1.1**         | ✅ SX1276   | ✅           | ✅ AXP2101 | GPIO 21/22                      | GPIO 13/14               | ✅ Supported |
+| **T-Beam T3 S3 v1.2**       | ✅ SX1262   | ⚠️ Variant   | ✅ AXP2101 | GPIO 18/17 (hardwired OLED/PMU) | GPIO 45/46               | ✅ Supported |
 
-| Data Rate | Spreading Factor | Max Payload | V2 Sensors That Fit | Range    |
-| --------- | ---------------- | ----------- | ------------------- | -------- |
-| DR2       | SF10             | 11 bytes    | Header only         | Best     |
-| DR3       | SF9              | 53 bytes    | 2 sensors           | Good     |
-| DR4       | SF8              | 125 bytes   | 10 sensors          | Medium   |
-| DR5       | SF7              | 222 bytes   | 12+ sensors (all)   | Shortest |
-
-**Key insight**: With V2 protobuf, even medium signal strength (DR4) can transmit **all 10 common environmental sensors** in a single uplink!
-
-### 🏠 **Home Assistant Integration**
-
-- **Automatic Discovery**: Zero-configuration sensor registration
-- **Device Grouping**: All sensors appear under single device entity
-- **Proper Device Classes**: Temperature, humidity, pressure, CO2, battery with correct icons
-- **Real-time Updates**: Live sensor data with configurable intervals
-
-### 🎛️ **Remote Command & Control**
-
-- **MQTT Command System**: Extensible remote control via MQTT messages
-- **Sensor Calibration**: Remote CO₂ sensor forced recalibration with custom ppm values
-- **ASC Control**: Enable/disable SCD4x automatic calibration remotely for global deployments
-- **System Management**: Remote restart, factory reset, diagnostic commands
-
-### 🔧 **Advanced Calibration Management**
-
-- **Multi-Sensor Calibration Tracking**: Individual calibration periods for each sensor type
-- **Smart Data Suppression**: Automatically suppresses unreliable data during calibration periods
-- **Calibration State Persistence**: Survives reboots - calibration progress maintained across power cycles
-- **Per-Sensor Timeframes**: SCD4x (7 days), SGP41 (12 hours), BME680 (2 days), PMS5003 (1 hour)
-- **Global Testing Mode**: User-controlled data suppression for sensor testing and setup
-
-### 🔐 **Enterprise Features**
-
-- **Secure Network Serial Monitor**: Password-protected telnet access for remote debugging
-- **MQTT Authentication**: Username/password authentication with secure credentials
-- **Network Resilience**: Automatic WiFi reconnection and MQTT failover
-- **Watchdog Protection**: Handles sensor failures gracefully without crashes
-
-## 🔌 **Supported Hardware**
-
-### **ESP32 Boards**
-
-| Board                       | LoRa     | GPS | PMU       | Primary I2C          | Secondary I2C            | Status      |
-| --------------------------- | -------- | --- | --------- | -------------------- | ------------------------ | ----------- |
-| **ESP32 WROOM-32/DevKit**   | ❌        | ❌   | ❌         | GPIO 21/22 (D21/D22) | GPIO 13/14 (D13/D14)     | ✅ Tested    |
-| **ESP32-C3 Generic**        | ❌        | ❌   | ❌         | GPIO 4/5             | GPIO 8/9                 | ✅ Supported |
-| **ESP32-S3 Generic DevKit** | ❌        | ❌   | ❌         | GPIO 8/9             | GPIO 17/18               | ✅ Supported |
-| **DFRobot Beetle ESP32-C6** | ❌        | ❌   | ❌         | GPIO 19/20 (SDA/SCL) | GPIO 6/7 (LP_SDA/LP_SCL) | ✅ Supported |
-| **T-Beam v0.7**             | ✅ SX1276 | ✅   | ✅ AXP192  | GPIO 21/22           | GPIO 13/14               | ✅ Supported |
-| **T-Beam v1.0/1.1**         | ✅ SX1276 | ✅   | ✅ AXP2101 | GPIO 21/22           | GPIO 13/14               | ✅ Supported |
-| **T-Beam T3 S3 v1.2**       | ✅ SX1262 | ⚠️ Variant | ✅ AXP2101 | GPIO 18/17 (hardwired OLED/PMU) | GPIO 45/46 | ✅ Supported |
-
-### **Supported Sensors**
+### Supported Sensors
 
 | Sensor      | Measurements                         | Interface | Address/Pins | Notes                                            |
 | ----------- | ------------------------------------ | --------- | ------------ | ------------------------------------------------ |
@@ -127,189 +70,28 @@ With 400ms dwell time restrictions, AU915 has the following payload limits:
 | **INA219**  | Voltage, Current, Power              | I2C       | 0x40-0x45    | DC power monitoring (0-26V, 3.2A)                |
 | **AXP2101** | Battery, Voltage, Status             | I2C       | 0x34         | Power management (T-Beam only)                   |
 
-## 📋 **Prerequisites**
+## Getting started
 
-### **Hardware Requirements**
+Pick a supported board, wire up whatever sensors you have, flash the firmware, and go. Full walkthroughs live on the docs site:
 
-- ESP32-based board (see supported hardware table)
-- Environmental sensors (SHT4x recommended, others optional)
-- PMS5003 air quality sensor (optional, requires 5V power supply)
-- **Time source**: Either WiFi (for NTP) OR GPS module (for atomic time)
-- WiFi network access (required for NTP time sync if no GPS)
-- MQTT broker (local or cloud-based)
+- 🚀 **[Quick Start](https://docs.wesense.earth/getting-started/quick-start)** — start here
+- 🔧 **[Build a WeSense Node](https://docs.wesense.earth/getting-started/build-wesense-node)** — hardware assembly and wiring
+- 🛒 **[Recommended Sensors](https://docs.wesense.earth/getting-started/recommended-sensors)** — what to buy
+- ⚡ **[Firmware Setup](https://docs.wesense.earth/getting-started/firmware-setup)** — Arduino IDE, libraries, flashing
+- ⚙️ **[Firmware Configuration](https://docs.wesense.earth/getting-started/firmware-configuration)** — credentials, sensors, transport
+- 📡 **[Managing Your Sensor](https://docs.wesense.earth/getting-started/managing-your-sensor)** — MQTT commands, calibration, remote control
+- 🧰 **[Board Configurations](https://docs.wesense.earth/hardware/board-configurations)** — per-board pin maps
+- 🏠 **[Home Assistant Integration](https://docs.wesense.earth/getting-started/home-assistant)** — auto-discovery setup
 
-### **Software Requirements**
+## Contributing
 
-- **Arduino IDE** 2.0+ or **PlatformIO**
-- **ESP32 Board Package** 2.0.0+
-- **Required Libraries** (install via Library Manager)
+Contributions welcome — new sensors, new boards, bug fixes, docs. See the **[Contributing Code guide](https://docs.wesense.earth/developers/contributing-code)**.
 
-## 🚀 **Quick Start**
+## License
 
-### **1. Install Arduino IDE & ESP32 Support**
+AGPL-3.0 — see [LICENSE](LICENSE).
 
-```bash
-# Download Arduino IDE from: https://www.arduino.cc/en/software
-
-# Add ESP32 board package URL in Arduino IDE:
-# File → Preferences → Additional Board Manager URLs:
-https://espressif.github.io/arduino-esp32/package_esp32_index.json
-
-# Install ESP32 boards:
-# Tools → Board → Board Manager → Search "ESP32" → Install
-```
-
-### **2. Install Required Libraries**
-
-Open Arduino IDE and install these libraries via **Tools → Manage Libraries**:
-
-```
-RadioLib (for LoRaWAN)
-SparkFun SCD4x CO2 Sensor Library
-SparkFun SCD30 Arduino Library
-Adafruit BMP280 Library
-Adafruit BMP3XX Library (for BMP390)
-Adafruit BME680 Library
-Adafruit AHTX0 Library
-Adafruit INA219 Library
-MS5611 (by Rob Tillaart — high-precision barometric pressure)
-PubSubClient (for MQTT)
-TinyGPSPlus
-XPowersLib (for T-Beam PMU support)
-```
-
-**Sensirion Libraries** (install manually):
-
-- Download from [Sensirion GitHub](https://github.com/Sensirion)
-- `SensirionI2CSgp41` (VOC/NOx sensor)
-- `SensirionI2cSht4x` (Temperature/Humidity sensor)
-
-### **3. Download & Configure Code**
-
-```bash
-# Clone or download this repository
-git clone https://github.com/wesense-earth/wesense-sensor-firmware.git
-cd wesense-sensor-firmware
-
-# Open wesense-sensor-firmware.ino in Arduino IDE
-```
-
-### **4. Basic Configuration**
-
-Edit the configuration section at the top of `wesense-sensor-firmware.ino`:
-
-```cpp
-// WiFi & MQTT Configuration
-const char* wifi_ssid = "YourWiFiNetwork";
-const char* wifi_password = "YourWiFiPassword";
-const char* mqtt_server = "192.168.1.100";  // Your MQTT broker IP
-const char* mqtt_user = "mqttuser";
-const char* mqtt_password = "mqttpassword";
-
-// Time Configuration
-const long gmt_offset_sec = 43200;      // Your timezone offset (43200 = GMT+12)
-const int daylight_offset_sec = 3600;   // Daylight saving (3600 = 1 hour)
-```
-
-### **5. Upload & Monitor**
-
-1. **Select your board**: Tools → Board → ESP32 Arduino → [Your Board]
-2. **Select port**: Tools → Port → [Your ESP32 Port]
-3. **Upload**: Click Upload button or Ctrl+U
-4. **Monitor**: Tools → Serial Monitor (115200 baud)
-
-## 📈 **Data Output**
-
-### **MQTT Topic Structure (v2)**
-
-```
-wesense/v2/{country}/{subdivision}/{device_id}
-```
-
-All sensor readings are consolidated into a single v2 protobuf message per publish cycle.
-
-**Example Topic:**
-
-- `wesense/v2/nz/auk/office_301274c0e8fc`
-
-**Subtopics for diagnostics/commands:**
-
-- `wesense/v2/nz/auk/office_301274c0e8fc/diagnostic/...`
-- `wesense/v2/nz/auk/office_301274c0e8fc/command/...`
-- `wesense/v2/nz/auk/office_301274c0e8fc/status/...`
-
-### **Payload Format (v2 Protobuf)**
-
-The v2 format consolidates all sensor readings into a single efficient protobuf message:
-
-- **WiFi**: ~35 bytes header + ~12-14 bytes per sensor (includes per-reading timestamps)
-- **LoRaWAN**: ~35 bytes header + ~7-9 bytes per sensor (uses header timestamp)
-
-See `proto/README.md` for detailed schema documentation.
-
-## 📚 **Documentation**
-
-### **📖 [Complete Documentation ➜](https://docs.wesense.earth/)**
-
-For detailed configuration, hardware guides, and architecture, see the documentation site:
-
-**🚀 Getting Started:**
-
-- **[Quick Start](https://docs.wesense.earth/getting-started/quick-start)** - Get a node running
-- **[Build a WeSense Node](https://docs.wesense.earth/getting-started/build-wesense-node)** - Hardware assembly and wiring
-- **[Recommended Sensors](https://docs.wesense.earth/getting-started/recommended-sensors)** - Sensor selection guide
-- **[Firmware Setup](https://docs.wesense.earth/getting-started/firmware-setup)** - Flashing and first boot
-- **[Firmware Configuration](https://docs.wesense.earth/getting-started/firmware-configuration)** - Complete settings reference
-- **[Firmware Update](https://docs.wesense.earth/getting-started/firmware-update)** - Updating an existing node
-
-**🎛️ Operation & Hardware:**
-
-- **[Managing Your Sensor](https://docs.wesense.earth/getting-started/managing-your-sensor)** - MQTT commands, calibration, remote control
-- **[Board Configurations](https://docs.wesense.earth/hardware/board-configurations)** - Per-board pin maps
-- **[Sensor Specs](https://docs.wesense.earth/hardware/sensor-specs)** - Supported sensor details
-- **[Enclosure Designs](https://docs.wesense.earth/hardware/enclosure-designs)** - Mounting and weatherproofing
-
-**🌐 Network & Deployment:**
-
-- **[Deployment Profiles](https://docs.wesense.earth/station-operators/deployment-profiles)** - Guardian / Contributor / Hub / Bootstrap
-- **[Operate a Station](https://docs.wesense.earth/station-operators/operate-a-station)** - Running your own node
-- **[Architecture](https://docs.wesense.earth/developers/architecture)** - How the WeSense network fits together
-- **[Contributing Code](https://docs.wesense.earth/developers/contributing-code)** - Contributing and extending
-
-## 🔧 **Troubleshooting Quick Reference**
-
-**WiFi Connection Failed**
-
-- Check SSID and password
-- Ensure 2.4GHz network (ESP32 doesn't support 5GHz)
-
-**Sensor Not Found**  
-
-- Check sensor wiring (SDA/SCL pins)
-- Verify sensor I2C address
-- Check 3.3V power supply
-
-**PMS5003 No Data**
-
-- Verify 5V power supply (required, not 3.3V)
-- Check UART wiring: PMS5003 TX → ESP32 RX, PMS5003 RX → ESP32 TX
-
-**For detailed troubleshooting**, see the **[Documentation site](https://docs.wesense.earth/)**
-
-## 🤝 **Contributing**
-
-Contributions welcome! Please see the **[Contributing Code guide](https://docs.wesense.earth/developers/contributing-code)** for details on:
-
-- Adding new sensors
-- Adding new boards  
-- Code style guidelines
-- Testing procedures
-
-## 📄 **License**
-
-This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE) file for details.
-
-## 📧 **Support**
+## Support
 
 - **Issues**: [GitHub Issues](https://github.com/wesense-earth/wesense-sensor-firmware/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/wesense-earth/wesense-sensor-firmware/discussions)
@@ -317,4 +99,4 @@ This project is licensed under the AGPL-3.0 License - see the [LICENSE](LICENSE)
 
 ---
 
-**Built for global environmental monitoring networks • Scales to thousands of devices • Production ready**
+**Open, decentralised, signed end-to-end.** Built so the air-quality data outlasts any single organisation.
