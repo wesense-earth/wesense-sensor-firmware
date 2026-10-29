@@ -36,6 +36,8 @@ jobs:
 
       - name: Generated C code matches the .proto
         run: |
+          # nanopb needs a protoc; use the system one so it does not constrain the protobuf version.
+          sudo apt-get install -y --no-install-recommends protobuf-compiler
           ./regenerate_proto.sh
           git diff --exit-code -- proto/wesense_homebrew_v2.pb.h proto/wesense_homebrew_v2.pb.c wesense_homebrew_v2.pb.h wesense_homebrew_v2.pb.c \
             || { echo "::error::Committed nanopb files differ from what the generator produces. Run ./regenerate_proto.sh and commit the result."; exit 1; }
