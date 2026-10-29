@@ -3,6 +3,8 @@ name: CI
 # What this checks, and what it cannot:
 #   - the protobuf definition shared by the firmware and the decoders still serialises and parses
 #     with the protobuf version installed from requirements.txt;
+#   - the build-time guard that refuses an empty or placeholder telnet password compiles and
+#     fails as intended (tests/telnet_password_check.sh);
 #   - the committed nanopb C files are exactly what the .proto generates with the installed
 #     nanopb generator, so a generator upgrade cannot silently change the code that ships.
 # It does not compile the sketch or run anything on a board: test firmware changes on a device.
@@ -33,6 +35,9 @@ jobs:
 
       - name: Protobuf round-trip tests
         run: python -m unittest discover -s proto/tests -v
+
+      - name: Telnet password build guard
+        run: ./tests/telnet_password_check.sh
 
       - name: Generated C code matches the .proto
         run: |

@@ -7,6 +7,7 @@
 
 // Credentials are stored separately - copy credentials.h.example to credentials.h
 #include "credentials.h"
+#include "telnet_password_check.h"
 
 // === DEVICE IDENTITY ===
 const char* COUNTRY_CODE = "nz";                  // ISO 3166-1: nz, au, us, gb, de, fr, jp, etc.
@@ -164,6 +165,8 @@ const bool ENABLE_SECURE_TELNET = true;           // Enable telnet debugging
 const int TELNET_PORT = 2323;                     // Telnet port (non-standard for security)
 const char* TELNET_PASSWORD = TELNET_PASS;        // From credentials.h
 const char* ALLOWED_TELNET_IP = TELNET_ALLOWED_IP; // From credentials.h
+// The build fails if TELNET_PASS is empty or still the placeholder while telnet is enabled.
+REQUIRE_TELNET_PASSWORD(ENABLE_SECURE_TELNET, TELNET_PASS);
 
 // === REMOTE LOGGING - Syslog Server ===
 const bool ENABLE_SYSLOG = true;                 // Enable UDP syslog logging
