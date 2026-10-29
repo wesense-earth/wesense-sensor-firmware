@@ -1,0 +1,43 @@
+name: CI
+
+# What this checks, and what it cannot:
+#   - the protobuf definition shared by the firmware and the decoders still serialises and parses
+#     with the protobuf version installed from requirements.txt;
+#   - the committed nanopb C files are exactly what the .proto generates with the installed
+#     nanopb generator, so a generator upgrade cannot silently change the code that ships.
+# It does not compile the sketch or run anything on a board: test firmware changes on a device.
+# "test" is the required check on main. Details: https://docs.wesense.earth/developers/dependency-updates
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Protobuf round-trip tests
+        run: python -m unittest discover -s proto/tests -v
+
+      - name: Generated C code matches the .proto
+        run: |
+          # nanopb needs a protoc; use the system one so it does not constrain the protobuf version.
+          sudo apt-get install -y --no-install-recommends protobuf-compiler
+          ./regenerate_proto.sh
+          git diff --exit-code -- proto/wesense_homebrew_v2.pb.h proto/wesense_homebrew_v2.pb.c wesense_homebrew_v2.pb.h wesense_homebrew_v2.pb.c \
+            || { echo "::error::Committed nanopb files differ from what the generator produces. Run ./regenerate_proto.sh and commit the result."; exit 1; }
