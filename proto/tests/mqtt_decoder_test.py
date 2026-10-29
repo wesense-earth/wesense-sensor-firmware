@@ -1,159 +1,98 @@
 #!/usr/bin/env python3
 """
-MQTT Protobuf Decoder Test Script
+MQTT protobuf decoder check (manual tool).
 
-Subscribes to protobuf topics from ESP32 and decodes messages in real-time.
-Use this to verify ESP32 protobuf encoding is working correctly.
+Subscribes to the raw WiFi sensor topic on an MQTT broker and decodes each message as a
+SensorReadingV2, so you can confirm an ESP32's protobuf encoding is working.
+
+Connection details come from environment variables. Nothing is hard-coded and there are no
+defaults for the credentials: if they are missing the script says so and stops.
+
+    MQTT_BROKER     broker host or IP            (required)
+    MQTT_USER       broker username              (required)
+    MQTT_PASSWORD   broker password              (required)
+    MQTT_PORT       broker port                  (default 1883)
+    MQTT_TOPIC      topic filter                 (default wesense/v2/wifi/#)
 
 Usage:
-    ./venv/bin/python3 mqtt_decoder_test.py
+    MQTT_BROKER=... MQTT_USER=... MQTT_PASSWORD=... python3 proto/tests/mqtt_decoder_test.py
 
 Press Ctrl+C to exit.
 """
 
-import sys
 import os
+import sys
 
-# Add parent directory to path so we can import proto module
+# Make the generated module in proto/ importable
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import paho.mqtt.client as mqtt
-import wesense_homebrew_pb2 as pb
+import wesense_homebrew_v2_pb2 as pb
 
-# MQTT Configuration (update to match your broker)
-MQTT_BROKER = "192.168.43.11"
-MQTT_PORT = 1883
-MQTT_USER = "mqttuser"
-MQTT_PASSWORD = "rubadub32"
 
-# Topic to subscribe to
-MQTT_TOPIC = "sensor/wesense/proto/#"
+def require_env(name):
+    value = os.environ.get(name)
+    if not value:
+        sys.exit(f"{name} is not set. See the usage notes at the top of this file.")
+    return value
 
-def on_connect(client, userdata, flags, rc):
-    """Callback when connected to MQTT broker"""
-    if rc == 0:
-        print(f"✅ Connected to MQTT broker: {MQTT_BROKER}:{MQTT_PORT}")
-        client.subscribe(MQTT_TOPIC)
-        print(f"📡 Subscribed to: {MQTT_TOPIC}")
-        print("\nWaiting for messages from ESP32...\n")
-    else:
-        print(f"❌ Connection failed with code {rc}")
 
-def on_message(client, userdata, msg):
-    """Callback when message received"""
-    print("=" * 70)
-    print(f"📥 Received message on: {msg.topic}")
-    print(f"   Payload size: {len(msg.payload)} bytes")
-    
-    try:
-        # Decode protobuf
-        reading = pb.SensorReading()
-        reading.ParseFromString(msg.payload)
-        
-        # Print decoded values
-        print("\n📊 Decoded Protobuf Data:")
-        print(f"   Device Taxonomy:")
-        print(f"      Vendor: {pb.Vendor.Name(reading.vendor)}")
-        print(f"      Product Line: {pb.ProductLine.Name(reading.product_line)}")
-        print(f"      Device Type: {pb.DeviceType.Name(reading.device_type)}")
-        
-        print(f"\n   Measurement:")
-        print(f"      Value: {reading.value}")
-        print(f"      Reading Type: {pb.ReadingType.Name(reading.reading_type)}")
-        print(f"      Sensor Model: {pb.SensorModel.Name(reading.sensor_model)}")
-        if reading.unit:
-            print(f"      Unit: {reading.unit}")
-        
-        print(f"\n   Temporal:")
-        print(f"      Timestamp: {reading.timestamp}")
-        print(f"      Timezone Offset: {reading.timezone_offset_sec}s")
-        
-        print(f"\n   Device:")
-        print(f"      Device ID: 0x{reading.device_id:016X}")
-        if reading.board_manufacturer:
-            print(f"      Board: {reading.board_manufacturer}")
-        if reading.board_model:
-            print(f"      Model: {reading.board_model}")
-        if reading.firmware_version:
-            print(f"      Firmware: {reading.firmware_version}")
-        
-        print(f"\n   Location:")
-        if reading.latitude_e5 != 0 or reading.longitude_e5 != 0:
-            print(f"      Latitude: {reading.latitude_e5 / 100000.0:.5f}°")
-            print(f"      Longitude: {reading.longitude_e5 / 100000.0:.5f}°")
-            print(f"      Location Source: {pb.LocationSource.Name(reading.location_source)}")
-        if reading.location_name:
-            print(f"      Name: {reading.location_name}")
-        
-        print(f"\n   Deployment:")
-        if reading.deployment_region:
-            print(f"      Region: {reading.deployment_region}")
-        print(f"      Type: {pb.DeploymentType.Name(reading.deployment_type)}")
-        if reading.deployment_location:
-            print(f"      Location: {reading.deployment_location}")
-        
-        print(f"\n   Transport:")
-        print(f"      Type: {pb.TransportType.Name(reading.transport_type)}")
-        
-        if reading.calibration_status != 0:
-            print(f"\n   Calibration:")
-            print(f"      Status: {pb.CalibrationStatus.Name(reading.calibration_status)}")
-            if reading.data_quality != 0:
-                print(f"      Data Quality: {pb.DataQuality.Name(reading.data_quality)}")
-            if reading.calibration_date != 0:
-                print(f"      Calibration Date: {reading.calibration_date}")
-        
-        print("\n✅ Decode successful!")
-        
-    except Exception as e:
-        print(f"\n❌ Decode failed: {e}")
-        import traceback
-        traceback.print_exc()
-        
-        # Print raw bytes for debugging
-        print(f"\n🔍 Raw payload (hex):")
-        print("   " + msg.payload.hex())
-    
-    print("=" * 70)
-    print()
+def describe(payload):
+    reading = pb.SensorReadingV2()
+    reading.ParseFromString(payload)
 
-def on_disconnect(client, userdata, rc):
-    """Callback when disconnected"""
-    if rc != 0:
-        print(f"⚠️  Unexpected disconnection. Code: {rc}")
+    lines = [f"   Device ID: 0x{reading.device_id:016X}", f"   Timestamp: {reading.timestamp}"]
+    if reading.node_name:
+        lines.append(f"   Node name: {reading.node_name}")
+    if reading.board_type:
+        lines.append(f"   Board: {pb.BoardType.Name(reading.board_type)}")
+    if reading.latitude_e5 or reading.longitude_e5:
+        lines.append(
+            f"   Location: {reading.latitude_e5 / 100000.0:.5f}, {reading.longitude_e5 / 100000.0:.5f}"
+        )
+    lines.append(f"   Deployment: {pb.DeploymentType.Name(reading.deployment_type)}")
+    lines.append(f"   Measurements ({len(reading.measurements)}):")
+    for m in reading.measurements:
+        lines.append(
+            f"      {pb.ReadingType.Name(m.reading_type)} = {m.value:g}"
+            f"  [{pb.SensorModel.Name(m.sensor_model)}]"
+        )
+    return "\n".join(lines)
+
 
 def main():
-    """Main entry point"""
-    print("=" * 70)
-    print("SkyTrace Protobuf Decoder - MQTT Test")
-    print("=" * 70)
-    
-    # Create MQTT client
-    client = mqtt.Client()
+    broker = require_env("MQTT_BROKER")
+    user = require_env("MQTT_USER")
+    password = require_env("MQTT_PASSWORD")
+    port = int(os.environ.get("MQTT_PORT", "1883"))
+    topic = os.environ.get("MQTT_TOPIC", "wesense/v2/wifi/#")
+
+    def on_connect(client, userdata, flags, reason_code, properties):
+        if reason_code.is_failure:
+            sys.exit(f"Connection failed: {reason_code}")
+        print(f"Connected to {broker}:{port}, subscribing to {topic}\nWaiting for messages...\n")
+        client.subscribe(topic)
+
+    def on_message(client, userdata, msg):
+        print("=" * 70)
+        print(f"{msg.topic}  ({len(msg.payload)} bytes)")
+        try:
+            print(describe(msg.payload))
+        except Exception as exc:  # decode problems are the thing this tool is for
+            print(f"   Decode FAILED: {exc}")
+            print(f"   Raw payload (hex): {msg.payload.hex()}")
+        print("=" * 70 + "\n")
+
+    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+    client.username_pw_set(user, password)
     client.on_connect = on_connect
     client.on_message = on_message
-    client.on_disconnect = on_disconnect
-    
-    # Set credentials if needed
-    if MQTT_USER and MQTT_PASSWORD:
-        client.username_pw_set(MQTT_USER, MQTT_PASSWORD)
-    
+    client.connect(broker, port)
     try:
-        # Connect to broker
-        print(f"\n🔌 Connecting to {MQTT_BROKER}:{MQTT_PORT}...")
-        client.connect(MQTT_BROKER, MQTT_PORT, 60)
-        
-        # Start listening
         client.loop_forever()
-        
     except KeyboardInterrupt:
-        print("\n\n⏹  Stopped by user")
-        client.disconnect()
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+        print("\nStopped.")
+
 
 if __name__ == "__main__":
     main()
